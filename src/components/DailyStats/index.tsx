@@ -28,6 +28,7 @@ import './daily-stats.css';
 import { dailyStatsStyles } from './daily-stats.styles';
 import { DailyStatsProps, StatItemProps, StatsTickerProps } from './daily-stats.types';
 import { useLocalization } from '@/src/context/localization';
+import { convertVolume } from '@/src/utils/unit-conversion';
 
 const StatsTicker: React.FC<StatsTickerProps> = ({ stats }) => {
   const { theme } = useTheme();
@@ -102,7 +103,7 @@ const StatItem: React.FC<StatItemProps> = ({ icon, label, value }) => (
   </div>
 );
 
-export const DailyStats: React.FC<DailyStatsProps> = ({ activities, date, isLoading = false, breastMilkBalance }) => {
+export const DailyStats: React.FC<DailyStatsProps> = ({ activities, date, isLoading = false, breastMilkBalance, defaultBottleUnit }) => {
   const { theme } = useTheme();
   const { t } = useLocalization();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -202,27 +203,31 @@ export const DailyStats: React.FC<DailyStatsProps> = ({ activities, date, isLoad
         
         // Only count feeds that occurred on the selected day
         if (time >= startOfDay && time <= endOfDay) {
-          const unit = activity.unitAbbr || 'oz';
+          const preferredUnit = defaultBottleUnit || 'OZ';
+          const entryUnit = activity.unitAbbr || 'OZ';
           
           // Separate tracking for solids vs bottle feeds
           if ('type' in activity && activity.type === 'SOLIDS') {
-            if (!solidsAmounts[unit]) {
-              solidsAmounts[unit] = 0;
+            const solidsUnit = activity.unitAbbr || 'TBSP';
+            if (!solidsAmounts[solidsUnit]) {
+              solidsAmounts[solidsUnit] = 0;
             }
-            solidsAmounts[unit] += activity.amount;
+            solidsAmounts[solidsUnit] += activity.amount;
           } else if ('type' in activity && activity.type === 'BOTTLE') {
             // Count bottle feeds and track amounts
             feedCount++;
-            if (!consumedAmounts[unit]) {
-              consumedAmounts[unit] = 0;
+            const convertedAmount = convertVolume(activity.amount, entryUnit, preferredUnit);
+            if (!consumedAmounts[preferredUnit]) {
+              consumedAmounts[preferredUnit] = 0;
             }
-            consumedAmounts[unit] += activity.amount;
+            consumedAmounts[preferredUnit] += convertedAmount;
           } else {
             // For other feed types (like BREAST with amount), just track amounts
-            if (!consumedAmounts[unit]) {
-              consumedAmounts[unit] = 0;
+            const convertedAmount = convertVolume(activity.amount, entryUnit, preferredUnit);
+            if (!consumedAmounts[preferredUnit]) {
+              consumedAmounts[preferredUnit] = 0;
             }
-            consumedAmounts[unit] += activity.amount;
+            consumedAmounts[preferredUnit] += convertedAmount;
           }
         }
       }
@@ -313,6 +318,7 @@ export const DailyStats: React.FC<DailyStatsProps> = ({ activities, date, isLoad
           rightAmount?: number; 
           totalAmount?: number; 
           unit?: string;
+          unitAbbr?: string;
         } => {
           return 'leftAmount' in act || 'rightAmount' in act;
         };
@@ -322,27 +328,27 @@ export const DailyStats: React.FC<DailyStatsProps> = ({ activities, date, isLoad
           
           // Only count pumps that occurred on the selected day
           if (startTime >= startOfDay && startTime <= endOfDay) {
-            // Make sure to use the correct unit for grouping
-            const unit = activity.unit ? activity.unit.toLowerCase() : 'oz';
+            const preferredUnit = defaultBottleUnit || 'OZ';
+            const entryUnit = activity.unitAbbr || activity.unit || 'OZ';
             
-            if (!pumpTotals[unit]) {
-              pumpTotals[unit] = 0;
+            if (!pumpTotals[preferredUnit]) {
+              pumpTotals[preferredUnit] = 0;
             }
             
             // Add left amount if available
             if (activity.leftAmount && typeof activity.leftAmount === 'number') {
-              pumpTotals[unit] += activity.leftAmount;
+              pumpTotals[preferredUnit] += convertVolume(activity.leftAmount, entryUnit, preferredUnit);
             }
             
             // Add right amount if available
             if (activity.rightAmount && typeof activity.rightAmount === 'number') {
-              pumpTotals[unit] += activity.rightAmount;
+              pumpTotals[preferredUnit] += convertVolume(activity.rightAmount, entryUnit, preferredUnit);
             }
             
             // If there's a total amount and no left/right, use that
             if (activity.totalAmount && typeof activity.totalAmount === 'number' && 
                 (!activity.leftAmount || !activity.rightAmount)) {
-              pumpTotals[unit] += activity.totalAmount;
+              pumpTotals[preferredUnit] += convertVolume(activity.totalAmount, entryUnit, preferredUnit);
             }
           }
         }
@@ -397,7 +403,7 @@ export const DailyStats: React.FC<DailyStatsProps> = ({ activities, date, isLoad
     
     // Format consumed amounts with feed count
     const formattedAmounts = Object.entries(consumedAmounts)
-      .map(([unit, amount]) => `${amount} ${unit.toLowerCase()}`)
+      .map(([unit, amount]) => `${unit.toUpperCase() === 'ML' ? Math.round(amount) : Math.round(amount * 10) / 10} ${unit.toLowerCase()}`)
       .join(', ');
     const formattedConsumed = feedCount > 0 
       ? `${feedCount} feed${feedCount !== 1 ? 's' : ''}, ${formattedAmounts}`
@@ -410,7 +416,7 @@ export const DailyStats: React.FC<DailyStatsProps> = ({ activities, date, isLoad
     
     // Format pump totals - ensure we're grouping by unit type correctly
     const formattedPumpTotals = Object.entries(pumpTotals)
-      .map(([unit, amount]) => `${amount.toFixed(1)} ${unit}`)
+      .map(([unit, amount]) => `${unit.toUpperCase() === 'ML' ? Math.round(amount) : Math.round(amount * 10) / 10} ${unit.toLowerCase()}`)
       .join(', ');
       
     // Format medicine counts

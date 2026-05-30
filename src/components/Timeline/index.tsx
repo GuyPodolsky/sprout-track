@@ -319,6 +319,7 @@ const Timeline = ({ activities, onActivityDeleted }: LegacyTimelineProps) => {
         date={selectedDate}
         isLoading={isLoadingActivities}
         breastMilkBalance={breastMilkBalance}
+        defaultBottleUnit={settings?.defaultBottleUnit}
       />
 
       {/* Activity List */}

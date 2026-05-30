@@ -15,6 +15,9 @@ export interface DailyStatsProps {
 
   /** Optional breast milk balance to display (e.g., "12.5 oz") */
   breastMilkBalance?: string;
+
+  /** Optional default bottle unit preference from settings */
+  defaultBottleUnit?: string;
 }
 
 /**

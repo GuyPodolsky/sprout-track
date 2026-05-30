@@ -23,6 +23,7 @@ import BreastFeedForm from './BreastFeedForm';
 import BottleFeedForm from './BottleFeedForm';
 import SolidsFeedForm from './SolidsFeedForm';
 import { useLocalization } from '@/src/context/localization';
+import { convertVolume } from '@/src/utils/unit-conversion';
 
 interface FeedFormProps {
   isOpen: boolean;
@@ -175,13 +176,28 @@ export default function FeedForm({
       if (data.success && data.data?.amount) {
         const lastBottleType = data.data.bottleType || '';
         const lastBmAmount = data.data.breastMilkAmount;
+        const targetUnit = type === 'BOTTLE' ? defaultSettings.defaultBottleUnit : defaultSettings.defaultSolidsUnit;
+        
+        let amount = data.data.amount;
+        let bmAmount = lastBmAmount;
+        
+        // Convert to target unit if it differs and type is BOTTLE
+        if (type === 'BOTTLE' && data.data.unitAbbr && data.data.unitAbbr !== targetUnit) {
+          amount = convertVolume(amount, data.data.unitAbbr, targetUnit);
+          if (bmAmount != null) {
+            bmAmount = convertVolume(bmAmount, data.data.unitAbbr, targetUnit);
+          }
+        }
+        
+        const formulaAmount = amount - (bmAmount || 0);
+
         setFormData(prev => ({
           ...prev,
-          amount: data.data.amount.toString(),
-          unit: data.data.unitAbbr || prev.unit,
+          amount: type === 'BOTTLE' ? amount.toFixed(targetUnit === 'ML' ? 0 : 1) : amount.toString(),
+          unit: targetUnit,
           ...(lastBottleType === 'Formula\\Breast' && lastBmAmount != null ? {
-            breastMilkAmount: lastBmAmount.toString(),
-            formulaAmount: (data.data.amount - lastBmAmount).toString(),
+            breastMilkAmount: bmAmount != null ? bmAmount.toFixed(targetUnit === 'ML' ? 0 : 1) : '',
+            formulaAmount: formulaAmount.toFixed(targetUnit === 'ML' ? 0 : 1),
           } : {}),
         }));
       }

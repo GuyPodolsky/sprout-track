@@ -47,6 +47,7 @@ export function NurseryModeContainer() {
   const [babySwitcherOpen, setBabySwitcherOpen] = useState(false);
   const [expandedTileId, setExpandedTileId] = useState<string | null>(null);
   const [enableBreastMilkTracking, setEnableBreastMilkTracking] = useState(true);
+  const [defaultBottleUnit, setDefaultBottleUnit] = useState('OZ');
   const [isLandscape, setIsLandscape] = useState(() =>
     typeof window !== 'undefined' && window.matchMedia('(orientation: landscape) and (max-height: 500px)').matches
   );
@@ -82,6 +83,7 @@ export function NurseryModeContainer() {
           const data = await res.json();
           if (data.success) {
             setEnableBreastMilkTracking(data.data?.enableBreastMilkTracking ?? true);
+            setDefaultBottleUnit(data.data?.defaultBottleUnit || 'OZ');
           }
         }
       } catch (err) {
@@ -651,6 +653,7 @@ export function NurseryModeContainer() {
                     toUTCString={toUTCString}
                     expanded={isExpanded}
                     enableBreastMilkTracking={enableBreastMilkTracking}
+                    defaultBottleUnit={defaultBottleUnit}
                   />
                 </div>
               );

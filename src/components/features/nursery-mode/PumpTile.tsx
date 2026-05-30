@@ -16,6 +16,7 @@ interface PumpTileProps {
   toUTCString: (date: Date | null | undefined) => string | null;
   expanded?: boolean;
   enableBreastMilkTracking?: boolean;
+  defaultBottleUnit?: string;
 }
 
 type PumpSide = 'left' | 'right' | 'both';
@@ -27,7 +28,7 @@ function formatDuration(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-export function PumpTile({ colors, log, onLog, onActiveChange, animating, babyId, toUTCString, expanded, enableBreastMilkTracking = true }: PumpTileProps) {
+export function PumpTile({ colors, log, onLog, onActiveChange, animating, babyId, toUTCString, expanded, enableBreastMilkTracking = true, defaultBottleUnit }: PumpTileProps) {
   const { t } = useLocalization();
   const [phase, setPhase] = useState<PumpPhase>('idle');
   const [activeSide, setActiveSide] = useState<PumpSide | null>(null);
@@ -111,6 +112,7 @@ export function PumpTile({ colors, log, onLog, onActiveChange, animating, babyId
           endTime: toUTCString(endTime),
           duration: durationMinutes,
           pumpAction,
+          unitAbbr: defaultBottleUnit || 'OZ',
         }),
       });
       const data = await res.json();

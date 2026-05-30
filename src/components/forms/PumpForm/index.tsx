@@ -220,6 +220,7 @@ export default function PumpForm({
             const data = await response.json();
             if (data.success && data.data?.defaultBottleUnit) {
               setFormData(prev => ({ ...prev, unitAbbr: data.data.defaultBottleUnit }));
+              setAdjustUnit(data.data.defaultBottleUnit);
             }
             setBreastMilkTrackingEnabled(data.data?.enableBreastMilkTracking ?? true);
           } catch (error) {
@@ -298,7 +299,7 @@ export default function PumpForm({
   const incrementAmount = (field: 'leftAmount' | 'rightAmount') => {
     const currentAmount = parseFloat(formData[field] || '0');
     const step = formData.unitAbbr === 'ML' ? 5 : 0.5;
-    const newAmount = (currentAmount + step).toFixed(1); // Only show one decimal place
+    const newAmount = (currentAmount + step).toFixed(formData.unitAbbr === 'ML' ? 0 : 1);
     
     // Update the field and recalculate total
     updateAmountField(field, newAmount);
@@ -308,7 +309,7 @@ export default function PumpForm({
     const currentAmount = parseFloat(formData[field] || '0');
     const step = formData.unitAbbr === 'ML' ? 5 : 0.5;
     if (currentAmount >= step) {
-      const newAmount = (currentAmount - step).toFixed(1); // Only show one decimal place
+      const newAmount = (currentAmount - step).toFixed(formData.unitAbbr === 'ML' ? 0 : 1);
       
       // Update the field and recalculate total
       updateAmountField(field, newAmount);
@@ -333,7 +334,7 @@ export default function PumpForm({
         setFormData(prev => ({ 
           ...prev, 
           [field]: value,
-          totalAmount: (leftNum + rightNum).toFixed(1) // Only show one decimal place
+          totalAmount: (leftNum + rightNum).toFixed(prev.unitAbbr === 'ML' ? 0 : 1)
         }));
       } else {
         // Just update the total field directly
@@ -533,14 +534,14 @@ export default function PumpForm({
   const incrementAdjustAmount = () => {
     const current = parseFloat(adjustAmount || '0');
     const step = adjustUnit === 'ML' ? 5 : 0.5;
-    setAdjustAmount((current + step).toFixed(1));
+    setAdjustAmount((current + step).toFixed(adjustUnit === 'ML' ? 0 : 1));
   };
 
   const decrementAdjustAmount = () => {
     const current = parseFloat(adjustAmount || '0');
     const step = adjustUnit === 'ML' ? 5 : 0.5;
     if (current >= step) {
-      setAdjustAmount((current - step).toFixed(1));
+      setAdjustAmount((current - step).toFixed(adjustUnit === 'ML' ? 0 : 1));
     }
   };
 

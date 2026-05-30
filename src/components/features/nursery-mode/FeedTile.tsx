@@ -6,6 +6,7 @@ import { TileShell, TileLog } from './TileShell';
 import { SubButton } from './SubButton';
 import { useLocalization } from '@/src/context/localization';
 import { ActiveBreastFeedResponse } from '@/app/api/types';
+import { convertVolume } from '@/src/utils/unit-conversion';
 
 interface FeedTileProps {
   colors: NurseryColors;
@@ -16,6 +17,7 @@ interface FeedTileProps {
   babyId: string;
   toUTCString: (date: Date | null | undefined) => string | null;
   expanded?: boolean;
+  defaultBottleUnit?: string;
 }
 
 type FeedPhase = 'idle' | 'feeding' | 'paused';
@@ -26,7 +28,7 @@ function formatDuration(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-export function FeedTile({ colors, log, onLog, onActiveChange, animating, babyId, toUTCString, expanded }: FeedTileProps) {
+export function FeedTile({ colors, log, onLog, onActiveChange, animating, babyId, toUTCString, expanded, defaultBottleUnit }: FeedTileProps) {
   const { t } = useLocalization();
   const [avgBottleAmount, setAvgBottleAmount] = useState<number | null>(null);
   const [defaultUnit, setDefaultUnit] = useState('OZ');
@@ -40,19 +42,19 @@ export function FeedTile({ colors, log, onLog, onActiveChange, animating, babyId
     onActiveChange?.('feed', phase !== 'idle');
   }, [phase, onActiveChange]);
 
+  // Sync defaultUnit from props
+  useEffect(() => {
+    if (defaultBottleUnit) {
+      setDefaultUnit(defaultBottleUnit);
+    }
+  }, [defaultBottleUnit]);
+
   // Fetch bottle defaults
   useEffect(() => {
     const fetchDefaults = async () => {
       const authToken = localStorage.getItem('authToken');
       const headers = { Authorization: authToken ? `Bearer ${authToken}` : '' };
-
-      try {
-        const settingsRes = await fetch('/api/settings', { headers });
-        const settingsData = await settingsRes.json();
-        if (settingsData.success && settingsData.data?.defaultBottleUnit) {
-          setDefaultUnit(settingsData.data.defaultBottleUnit);
-        }
-      } catch { /* use default */ }
+      const activeUnit = defaultBottleUnit || 'OZ';
 
       try {
         const feedRes = await fetch(`/api/feed-log?babyId=${babyId}&type=BOTTLE`, { headers });
@@ -62,8 +64,15 @@ export function FeedTile({ colors, log, onLog, onActiveChange, animating, babyId
             .filter((f: any) => f.type === 'BOTTLE' && f.amount != null)
             .slice(0, 20);
           if (bottleFeeds.length > 0) {
-            const total = bottleFeeds.reduce((sum: number, f: any) => sum + f.amount, 0);
-            const avg = Math.round((total / bottleFeeds.length) * 10) / 10;
+            const convertedAmounts = bottleFeeds.map((f: any) => {
+              const fromUnit = f.unitAbbr || 'OZ';
+              return convertVolume(f.amount, fromUnit, activeUnit);
+            });
+            const total = convertedAmounts.reduce((sum: number, amt: number) => sum + amt, 0);
+            const rawAvg = total / bottleFeeds.length;
+            const avg = activeUnit === 'ML'
+              ? Math.round(rawAvg)
+              : Math.round(rawAvg * 10) / 10;
             setAvgBottleAmount(avg);
           }
         }
@@ -71,7 +80,7 @@ export function FeedTile({ colors, log, onLog, onActiveChange, animating, babyId
     };
 
     if (babyId) fetchDefaults();
-  }, [babyId]);
+  }, [babyId, defaultBottleUnit]);
 
   // Check for existing active breastfeed session on mount / baby change
   useEffect(() => {
