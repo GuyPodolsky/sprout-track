@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 import {
   DateFormatSetting,
   TimeFormatSetting,
@@ -139,6 +140,7 @@ export function TimezoneProvider({ children }: { children: ReactNode }) {
   const [isDST, setIsDST] = useState<boolean>(false);
   const [dateFormat, setDateFormat] = useState<DateFormatSetting>('MM/DD/YYYY');
   const [timeFormat, setTimeFormat] = useState<TimeFormatSetting>(fallbackTimeFormat);
+  const pathname = usePathname();
 
   /**
    * Detect and set the user's timezone and DST status
@@ -187,7 +189,17 @@ export function TimezoneProvider({ children }: { children: ReactNode }) {
           headers['Authorization'] = `Bearer ${token}`;
         }
 
-        const response = await fetch('/api/settings', { headers });
+        // Determine family slug from pathname when fetching settings
+        let url = '/api/settings';
+        if (pathname) {
+          const segments = pathname.split('/').filter(Boolean);
+          const possibleSlug = segments.length > 0 ? segments[0] : null;
+          if (possibleSlug && !['api', 'setup', 'manage', '_next', 'static', 'favicon.ico'].includes(possibleSlug)) {
+            url += `?familySlug=${encodeURIComponent(possibleSlug)}`;
+          }
+        }
+
+        const response = await fetch(url, { headers });
         if (!response.ok) return;
 
         const result = await response.json();
@@ -200,7 +212,7 @@ export function TimezoneProvider({ children }: { children: ReactNode }) {
       }
     };
     fetchFormatSettings();
-  }, []);
+  }, [pathname]);
 
   /**
    * Update the date and time format settings immediately (called from settings UI)

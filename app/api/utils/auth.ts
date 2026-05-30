@@ -157,15 +157,84 @@ export async function getAuthenticatedUser(req: NextRequest): Promise<AuthResult
     // If auth is disabled, bypass all checks and return default administrative context
     if (process.env.DISABLE_AUTH === 'true') {
       try {
-        const family = await prisma.family.findFirst({
-          where: { isActive: true },
-          include: {
-            caretakers: {
-              where: { deletedAt: null },
-              orderBy: { createdAt: 'asc' },
+        const headerFamilyId = req.headers.get('x-family-id');
+        const headerFamilySlug = req.headers.get('x-family-slug');
+
+        // Check referer header for the family slug
+        let refererSlug: string | null = null;
+        const referer = req.headers.get('referer');
+        if (referer) {
+          try {
+            const refererUrl = new URL(referer);
+            const pathSegments = refererUrl.pathname.split('/').filter(Boolean);
+            if (pathSegments.length > 0) {
+              const possibleSlug = pathSegments[0];
+              if (!['api', 'setup', 'manage', '_next', 'static', 'favicon.ico'].includes(possibleSlug)) {
+                refererSlug = possibleSlug;
+              }
+            }
+          } catch (e) {
+            // Ignore referer parsing errors
+          }
+        }
+
+        // Check query parameters
+        const urlObj = new URL(req.url);
+        const queryFamilyId = urlObj.searchParams.get('familyId');
+        const queryFamilySlug = urlObj.searchParams.get('familySlug');
+
+        // Check if the URL path itself indicates a slug (e.g., /api/family/by-slug/guy-family)
+        let routeSlug: string | null = null;
+        if (urlObj.pathname.includes('/by-slug/')) {
+          const parts = urlObj.pathname.split('/');
+          const idx = parts.indexOf('by-slug');
+          if (idx !== -1 && idx + 1 < parts.length) {
+            routeSlug = decodeURIComponent(parts[idx + 1]);
+          }
+        }
+
+        // Build the query to find the specific family if any context was passed
+        let whereClause: any = null;
+        if (headerFamilyId) {
+          whereClause = { id: headerFamilyId };
+        } else if (queryFamilyId) {
+          whereClause = { id: queryFamilyId };
+        } else if (headerFamilySlug) {
+          whereClause = { slug: headerFamilySlug };
+        } else if (routeSlug) {
+          whereClause = { slug: routeSlug };
+        } else if (queryFamilySlug) {
+          whereClause = { slug: queryFamilySlug };
+        } else if (refererSlug) {
+          whereClause = { slug: refererSlug };
+        }
+
+        let family = null;
+        if (whereClause) {
+          family = await prisma.family.findFirst({
+            where: { ...whereClause, isActive: true },
+            include: {
+              caretakers: {
+                where: { deletedAt: null },
+                orderBy: { createdAt: 'asc' },
+              },
             },
-          },
-        });
+          });
+        }
+
+        // Fallback to first active family if not found or no context was passed
+        if (!family) {
+          family = await prisma.family.findFirst({
+            where: { isActive: true },
+            include: {
+              caretakers: {
+                where: { deletedAt: null },
+                orderBy: { createdAt: 'asc' },
+              },
+            },
+          });
+        }
+
         if (family) {
           const caretaker = family.caretakers[0];
           return {
@@ -181,7 +250,7 @@ export async function getAuthenticatedUser(req: NextRequest): Promise<AuthResult
           };
         }
       } catch (dbError) {
-        console.error('Error finding default family for DISABLE_AUTH:', dbError);
+        console.error('Error finding family for DISABLE_AUTH:', dbError);
       }
       return {
         authenticated: true,

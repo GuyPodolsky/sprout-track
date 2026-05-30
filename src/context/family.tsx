@@ -236,14 +236,36 @@ export function FamilyProvider({ children, onLogout }: { children: ReactNode; on
         // Ensure url is a string before calling string methods
         const isApiCall = url && typeof url === 'string' && (url.startsWith('/api') || url.includes('/api/'));
 
-        // If this is an API call and we have a token, add the Authorization header
-        if (isApiCall && authToken) {
+        // If this is an API call, handle headers
+        if (isApiCall) {
           const options = args[1] || {};
           const headers = new Headers(options.headers || {});
 
-          // Only add header if not already present
-          if (!headers.has('Authorization')) {
+          // Add Authorization header if not already present
+          if (authToken && !headers.has('Authorization')) {
             headers.set('Authorization', `Bearer ${authToken}`);
+          }
+
+          // Add family headers if family context is available or can be determined
+          if (family) {
+            if (!headers.has('x-family-id')) {
+              headers.set('x-family-id', family.id);
+            }
+            if (!headers.has('x-family-slug')) {
+              headers.set('x-family-slug', family.slug);
+            }
+          } else {
+            // Fallback: extract slug from pathname if possible
+            const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+            const segments = pathname.split('/').filter(Boolean);
+            if (segments.length > 0) {
+              const possibleSlug = segments[0];
+              if (!['api', 'setup', 'manage', '_next', 'static', 'favicon.ico'].includes(possibleSlug)) {
+                if (!headers.has('x-family-slug')) {
+                  headers.set('x-family-slug', possibleSlug);
+                }
+              }
+            }
           }
 
           // Update the request with the new headers
@@ -285,7 +307,7 @@ export function FamilyProvider({ children, onLogout }: { children: ReactNode; on
     return () => {
       window.fetch = originalFetch;
     };
-  }, [onLogout]);
+  }, [onLogout, family]);
 
   // Authenticated fetch wrapper that automatically handles 401 responses
   const authenticatedFetch = useCallback(async (url: string, options?: RequestInit): Promise<Response> => {
@@ -296,6 +318,27 @@ export function FamilyProvider({ children, onLogout }: { children: ReactNode; on
     const headers = new Headers(options?.headers || {});
     if (authToken && !headers.has('Authorization')) {
       headers.set('Authorization', `Bearer ${authToken}`);
+    }
+
+    if (family) {
+      if (!headers.has('x-family-id')) {
+        headers.set('x-family-id', family.id);
+      }
+      if (!headers.has('x-family-slug')) {
+        headers.set('x-family-slug', family.slug);
+      }
+    } else {
+      // Fallback: extract slug from pathname if possible
+      const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+      const segments = pathname.split('/').filter(Boolean);
+      if (segments.length > 0) {
+        const possibleSlug = segments[0];
+        if (!['api', 'setup', 'manage', '_next', 'static', 'favicon.ico'].includes(possibleSlug)) {
+          if (!headers.has('x-family-slug')) {
+            headers.set('x-family-slug', possibleSlug);
+          }
+        }
+      }
     }
 
     const mergedOptions: RequestInit = {
@@ -323,7 +366,7 @@ export function FamilyProvider({ children, onLogout }: { children: ReactNode; on
       console.error('API request failed:', error);
       throw error;
     }
-  }, [onLogout]);
+  }, [onLogout, family]);
 
   const value = {
     family,
