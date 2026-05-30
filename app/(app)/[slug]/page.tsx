@@ -16,7 +16,7 @@ function FamilySlugPageContent() {
   const { theme } = useTheme();
   const { family, loading: familyLoading } = useFamily();
   const { t } = useLocalization();
-  const { disableAuth } = useDeployment();
+  const { disableAuth, isLoading: isDeploymentLoading } = useDeployment();
   const [families, setFamilies] = useState<FamilyResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [slugValidated, setSlugValidated] = useState(false);
@@ -80,10 +80,10 @@ function FamilySlugPageContent() {
     loadFamilies();
   }, [slugValidated]);
 
-  // Check authentication status (only once when slug is validated)
+  // Check authentication status (when slug is validated and deployment config is loaded)
   useEffect(() => {
-    // Don't check auth until slug is validated
-    if (!slugValidated) return;
+    // Don't check auth until slug is validated and deployment config is loaded
+    if (!slugValidated || isDeploymentLoading) return;
 
     setIsCheckingAuth(true);
 
@@ -153,9 +153,9 @@ function FamilySlugPageContent() {
       setIsCheckingAuth(false);
     };
 
-    // Only check once when slug is validated, not continuously
+    // Check auth status
     checkAuth();
-  }, [slugValidated]); // Only depend on slugValidated to prevent loops
+  }, [slugValidated, isDeploymentLoading]); // Only depend on slugValidated to prevent loops
 
   // Check if family is inactive and redirect to root
   useEffect(() => {

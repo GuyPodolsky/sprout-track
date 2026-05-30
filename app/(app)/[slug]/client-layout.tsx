@@ -54,7 +54,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
   const params = useParams();
   const { family } = useFamily();
   const { selectedBaby, setSelectedBaby, sleepingBabies } = useBaby();
-  const { isSaasMode, notificationsEnabled, disableAuth } = useDeployment();
+  const { isSaasMode, notificationsEnabled, disableAuth, isLoading: isDeploymentLoading } = useDeployment();
   const { t } = useLocalization();
   const [mounted, setMounted] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -499,6 +499,10 @@ function AppContent({ children }: { children: React.ReactNode }) {
     
     // Function to check authentication status
     const checkAuthStatus = () => {
+      if (isDeploymentLoading) {
+        return;
+      }
+
       // If on root slug page, skip auth checks - page component handles it
       if (isRootSlugPage) {
         return;
@@ -706,6 +710,10 @@ function AppContent({ children }: { children: React.ReactNode }) {
   // Check unlock status based on JWT token and extract user info
   useEffect(() => {
     const checkUnlockStatus = () => {
+      if (isDeploymentLoading) {
+        return;
+      }
+
       if (disableAuth) {
         setIsUnlocked(true);
         return;
@@ -762,7 +770,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
     // Then check every second
     const interval = setInterval(checkUnlockStatus, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isDeploymentLoading, disableAuth]);
 
   if (!mounted) return null;
 
