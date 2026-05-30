@@ -445,7 +445,7 @@ export const DailyStats: React.FC<DailyStatsProps> = ({ activities, date, isLoad
       pumpTotals: formattedPumpTotals || 'None',
       medicineCounts: formattedMedicineCounts
     };
-  }, [activities, date]);
+  }, [activities, date, defaultBottleUnit, breastMilkBalance]);
 
   return (
     <Card className={cn(dailyStatsStyles.container, 'overflow-hidden border-0 border-b border-gray-200')}>

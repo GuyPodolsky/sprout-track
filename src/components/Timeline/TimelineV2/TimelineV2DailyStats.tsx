@@ -639,7 +639,7 @@ const TimelineV2DailyStats: React.FC<TimelineV2DailyStatsProps> = ({
     }
 
     return tiles;
-  }, [activities, date, t]);
+  }, [activities, date, t, defaultBottleUnit, breastMilkBalance, enableBreastMilkTracking]);
 
   const formatDateDisplay = (date: Date): string => {
     return formatDateLong(date, dateFormat);
