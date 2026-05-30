@@ -196,7 +196,29 @@ function AppContent({ children }: { children: React.ReactNode }) {
       
       // Only fetch caretaker info if not an account holder
       if (!accountUserInfo) {
-        const caretakerId = localStorage.getItem('caretakerId');
+        let caretakerId = localStorage.getItem('caretakerId');
+        
+        // If auth is bypassed, automatically fetch system caretaker for the current family slug context
+        if (disableAuth) {
+          try {
+            const systemCaretakerResponse = await fetch('/api/caretaker/system');
+            if (systemCaretakerResponse.ok) {
+              const systemCaretakerData = await systemCaretakerResponse.json();
+              if (systemCaretakerData.success && systemCaretakerData.data) {
+                const newCaretakerId = systemCaretakerData.data.id;
+                if (newCaretakerId !== caretakerId) {
+                  caretakerId = newCaretakerId;
+                  localStorage.setItem('caretakerId', caretakerId!);
+                  // Dispatch event to update ActivityTileGroup and other listeners
+                  window.dispatchEvent(new CustomEvent('caretakerChanged', { detail: { caretakerId } }));
+                }
+              }
+            }
+          } catch (e) {
+            console.error('Error fetching system caretaker for disableAuth:', e);
+          }
+        }
+
         if (caretakerId) {
           const caretakerResponse = await fetch(`/api/caretaker?id=${caretakerId}`);
           if (caretakerResponse.ok) {
@@ -460,6 +482,13 @@ function AppContent({ children }: { children: React.ReactNode }) {
       fetchData();
     }
   }, [family?.id, pathname, familySlug]);
+
+  // Refetch data when disableAuth resolves to ensure system caretaker context is loaded
+  useEffect(() => {
+    if (disableAuth) {
+      fetchData();
+    }
+  }, [disableAuth]);
   
   // Validate family slug exists
   const validateFamilySlug = useCallback(async (slug: string) => {
