@@ -33,6 +33,8 @@ services:
       - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY:-}
       - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY:-}
       - VAPID_SUBJECT=${VAPID_SUBJECT:-mailto:notifications@sprouttrack.app}
+      - DISABLE_AUTH=${DISABLE_AUTH:-false}
+      - TIME_FORMAT=${TIME_FORMAT:-12h}
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
       interval: 30s

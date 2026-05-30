@@ -54,7 +54,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
   const params = useParams();
   const { family } = useFamily();
   const { selectedBaby, setSelectedBaby, sleepingBabies } = useBaby();
-  const { isSaasMode, notificationsEnabled } = useDeployment();
+  const { isSaasMode, notificationsEnabled, disableAuth } = useDeployment();
   const { t } = useLocalization();
   const [mounted, setMounted] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -504,6 +504,11 @@ function AppContent({ children }: { children: React.ReactNode }) {
         return;
       }
       
+      if (disableAuth) {
+        setIsUnlocked(true);
+        return;
+      }
+      
       const authToken = localStorage.getItem('authToken');
       const unlockTime = localStorage.getItem('unlockTime');
 
@@ -701,6 +706,11 @@ function AppContent({ children }: { children: React.ReactNode }) {
   // Check unlock status based on JWT token and extract user info
   useEffect(() => {
     const checkUnlockStatus = () => {
+      if (disableAuth) {
+        setIsUnlocked(true);
+        return;
+      }
+
       const authToken = localStorage.getItem('authToken');
       const unlockTime = localStorage.getItem('unlockTime');
 

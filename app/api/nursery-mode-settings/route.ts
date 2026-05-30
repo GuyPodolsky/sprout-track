@@ -97,6 +97,7 @@ async function handlePost(req: NextRequest, authContext: AuthResult): Promise<Ne
           defaultHeightUnit: 'IN',
           defaultWeightUnit: 'LB',
           defaultTempUnit: 'F',
+          timeFormat: (process.env.TIME_FORMAT || process.env.DEFAULT_TIME_FORMAT || '12h') === '24h' ? '24h' : '12h',
         },
       });
     }

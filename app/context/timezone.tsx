@@ -123,6 +123,13 @@ interface TimezoneContextType {
 
 const TimezoneContext = createContext<TimezoneContextType | undefined>(undefined);
 
+const fallbackTimeFormat: TimeFormatSetting = (typeof process !== 'undefined' && (
+  process.env.NEXT_PUBLIC_TIME_FORMAT === '24h' ||
+  process.env.NEXT_PUBLIC_DEFAULT_TIME_FORMAT === '24h' ||
+  process.env.TIME_FORMAT === '24h' ||
+  process.env.DEFAULT_TIME_FORMAT === '24h'
+)) ? '24h' : '12h';
+
 /**
  * Provider component for timezone context
  */
@@ -131,7 +138,7 @@ export function TimezoneProvider({ children }: { children: ReactNode }) {
   const [userTimezone, setUserTimezone] = useState<string>('UTC');
   const [isDST, setIsDST] = useState<boolean>(false);
   const [dateFormat, setDateFormat] = useState<DateFormatSetting>('MM/DD/YYYY');
-  const [timeFormat, setTimeFormat] = useState<TimeFormatSetting>('12h');
+  const [timeFormat, setTimeFormat] = useState<TimeFormatSetting>(fallbackTimeFormat);
 
   /**
    * Detect and set the user's timezone and DST status
@@ -174,11 +181,13 @@ export function TimezoneProvider({ children }: { children: ReactNode }) {
     const fetchFormatSettings = async () => {
       try {
         const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
-        if (!token) return;
+        
+        const headers: HeadersInit = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
 
-        const response = await fetch('/api/settings', {
-          headers: { 'Authorization': `Bearer ${token}` },
-        });
+        const response = await fetch('/api/settings', { headers });
         if (!response.ok) return;
 
         const result = await response.json();

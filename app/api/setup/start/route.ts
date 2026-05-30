@@ -78,6 +78,7 @@ async function handler(req: NextRequest): Promise<NextResponse<ApiResponse<Famil
           data: {
             familyId: family.id,
             familyName: name,
+            timeFormat: (process.env.TIME_FORMAT || process.env.DEFAULT_TIME_FORMAT || '12h') === '24h' ? '24h' : '12h',
           },
         });
 
@@ -144,6 +145,7 @@ async function handler(req: NextRequest): Promise<NextResponse<ApiResponse<Famil
             defaultHeightUnit: 'IN',
             defaultWeightUnit: 'LB',
             defaultTempUnit: 'F',
+            timeFormat: (process.env.TIME_FORMAT || process.env.DEFAULT_TIME_FORMAT || '12h') === '24h' ? '24h' : '12h',
             activitySettings: JSON.stringify({
               global: {
                 order: ['sleep', 'feed', 'diaper', 'note', 'bath', 'pump', 'measurement', 'milestone', 'medicine'],
@@ -229,6 +231,7 @@ async function handler(req: NextRequest): Promise<NextResponse<ApiResponse<Famil
             data: {
               familyId: family.id,
               familyName: name,
+              timeFormat: (process.env.TIME_FORMAT || process.env.DEFAULT_TIME_FORMAT || '12h') === '24h' ? '24h' : '12h',
             },
           });
 
@@ -282,6 +285,7 @@ async function handler(req: NextRequest): Promise<NextResponse<ApiResponse<Famil
               data: {
                 familyId: family.id,
                 familyName: name,
+                timeFormat: (process.env.TIME_FORMAT || process.env.DEFAULT_TIME_FORMAT || '12h') === '24h' ? '24h' : '12h',
               },
             });
 

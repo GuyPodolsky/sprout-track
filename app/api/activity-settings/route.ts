@@ -369,6 +369,7 @@ async function saveActivitySettings(req: NextRequest, authContext: AuthResult): 
               visible: ['sleep', 'feed', 'diaper', 'note', 'bath', 'pump', 'play', 'measurement', 'milestone', 'medicine', 'vaccine']
             }
           }),
+          timeFormat: (process.env.TIME_FORMAT || process.env.DEFAULT_TIME_FORMAT || '12h') === '24h' ? '24h' : '12h',
         }
       });
     }

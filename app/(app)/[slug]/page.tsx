@@ -8,6 +8,7 @@ import { useFamily } from '@/src/context/family';
 import { useLocalization } from '@/src/context/localization';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/src/components/ui/select';
 import { FamilyResponse } from '@/app/api/types';
+import { useDeployment } from '../../context/deployment';
 
 function FamilySlugPageContent() {
   const router = useRouter();
@@ -15,6 +16,7 @@ function FamilySlugPageContent() {
   const { theme } = useTheme();
   const { family, loading: familyLoading } = useFamily();
   const { t } = useLocalization();
+  const { disableAuth } = useDeployment();
   const [families, setFamilies] = useState<FamilyResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [slugValidated, setSlugValidated] = useState(false);
@@ -86,6 +88,17 @@ function FamilySlugPageContent() {
     setIsCheckingAuth(true);
 
     const checkAuth = () => {
+      if (disableAuth) {
+        setIsAuthenticated(true);
+        if (!hasRedirectedRef.current && familySlug) {
+          hasRedirectedRef.current = true;
+          const targetUrl = `/${familySlug}/log-entry`;
+          window.location.href = targetUrl;
+        }
+        setIsCheckingAuth(false);
+        return;
+      }
+
       const authToken = localStorage.getItem('authToken');
       const unlockTime = localStorage.getItem('unlockTime');
 

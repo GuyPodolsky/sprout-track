@@ -73,6 +73,7 @@ async function handlePost(req: NextRequest, authContext: AuthResult): Promise<Ne
           defaultWeightUnit: 'LB',
           defaultTempUnit: 'F',
           sleepLocationSettings: JSON.stringify({ hiddenLocations }),
+          timeFormat: (process.env.TIME_FORMAT || process.env.DEFAULT_TIME_FORMAT || '12h') === '24h' ? '24h' : '12h',
         } as any,
       });
     } else {

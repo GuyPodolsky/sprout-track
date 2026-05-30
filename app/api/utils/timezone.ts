@@ -86,6 +86,7 @@ export async function getSettings() {
         defaultHeightUnit: 'IN',
         defaultWeightUnit: 'LB',
         defaultTempUnit: 'F',
+        timeFormat: (process.env.TIME_FORMAT || process.env.DEFAULT_TIME_FORMAT || '12h') === '24h' ? '24h' : '12h',
       },
     });
   }

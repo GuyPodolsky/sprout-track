@@ -11,6 +11,7 @@ interface DeploymentConfig {
   allowAccountRegistration: boolean | null;
   betaEnabled: boolean | null;
   notificationsEnabled: boolean | null;
+  disableAuth: boolean | null;
 }
 
 /**
@@ -56,6 +57,11 @@ interface DeploymentContextType {
    * Whether push notifications are enabled
    */
   notificationsEnabled: boolean;
+
+  /**
+   * Whether authentication is disabled
+   */
+  disableAuth: boolean;
 
   /**
    * Force refresh the deployment configuration
@@ -111,6 +117,7 @@ export function DeploymentProvider({ children }: { children: ReactNode }) {
           allowAccountRegistration: result.data.allowAccountRegistration || false,
           betaEnabled: result.data.betaEnabled !== undefined ? result.data.betaEnabled : null,
           notificationsEnabled: result.data.notificationsEnabled || false,
+          disableAuth: result.data.disableAuth || false,
         };
         
         setConfig(deploymentConfig);
@@ -130,6 +137,7 @@ export function DeploymentProvider({ children }: { children: ReactNode }) {
         allowAccountRegistration: false,
         betaEnabled: null,
         notificationsEnabled: false,
+        disableAuth: false,
       };
       
       setConfig(fallbackConfig);
@@ -188,6 +196,7 @@ export function DeploymentProvider({ children }: { children: ReactNode }) {
   const registrationAllowed = config?.allowAccountRegistration || false;
   const betaEnabled = config?.betaEnabled === true;
   const notificationsEnabled = config?.notificationsEnabled === true;
+  const disableAuth = config?.disableAuth === true;
 
   return (
     <DeploymentContext.Provider value={{
@@ -199,6 +208,7 @@ export function DeploymentProvider({ children }: { children: ReactNode }) {
       registrationAllowed,
       betaEnabled,
       notificationsEnabled,
+      disableAuth,
       refreshConfig,
       getDeploymentInfo,
     }}>

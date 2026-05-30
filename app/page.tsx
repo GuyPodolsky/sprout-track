@@ -25,6 +25,15 @@ export default function HomePage() {
         const configResponse = await fetch('/api/deployment-config');
         const configData = await configResponse.json();
         
+        if (configData.success && configData.data?.disableAuth) {
+          const familiesResponse = await fetch('/api/family/public-list');
+          const familiesData = await familiesResponse.json();
+          if (familiesData.success && Array.isArray(familiesData.data) && familiesData.data.length > 0) {
+            router.push(`/${familiesData.data[0].slug}/log-entry`);
+            return;
+          }
+        }
+
         if (configData.success && configData.data?.deploymentMode === 'saas') {
           // SaaS mode - render SaaS homepage directly
           setDeploymentMode('saas');

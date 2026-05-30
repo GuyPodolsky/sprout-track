@@ -114,6 +114,16 @@ const ENV_DEFAULTS = [
     conditionalOn: 'ENABLE_NOTIFICATIONS',
     comment: 'Secret for securing the notification cron endpoint (auto-generated)',
     quoted: true
+  },
+  {
+    key: 'DISABLE_AUTH',
+    default: 'false',
+    comment: 'Bypass authentication (run without auth)'
+  },
+  {
+    key: 'TIME_FORMAT',
+    default: '12h',
+    comment: 'Default time format: "12h" or "24h"'
   }
 ];
 
@@ -205,7 +215,9 @@ function main() {
 
     // Determine the value
     let value;
-    if (def.generate) {
+    if (process.env[def.key] !== undefined && process.env[def.key] !== '') {
+      value = process.env[def.key];
+    } else if (def.generate) {
       value = crypto.randomBytes(32).toString('hex');
       console.log(`  Generated ${def.key}`);
     } else {

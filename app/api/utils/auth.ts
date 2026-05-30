@@ -154,6 +154,48 @@ export async function verifyAuthentication(req: NextRequest): Promise<boolean> {
  */
 export async function getAuthenticatedUser(req: NextRequest): Promise<AuthResult> {
   try {
+    // If auth is disabled, bypass all checks and return default administrative context
+    if (process.env.DISABLE_AUTH === 'true') {
+      try {
+        const family = await prisma.family.findFirst({
+          where: { isActive: true },
+          include: {
+            caretakers: {
+              where: { deletedAt: null },
+              orderBy: { createdAt: 'asc' },
+            },
+          },
+        });
+        if (family) {
+          const caretaker = family.caretakers[0];
+          return {
+            authenticated: true,
+            caretakerId: caretaker?.id || 'default-caretaker-id',
+            caretakerType: caretaker?.type || 'System Caretaker',
+            caretakerRole: (caretaker as any)?.role || 'ADMIN',
+            familyId: family.id,
+            familySlug: family.slug,
+            isSysAdmin: true,
+            authType: 'CARETAKER',
+            isAccountAuth: false,
+          };
+        }
+      } catch (dbError) {
+        console.error('Error finding default family for DISABLE_AUTH:', dbError);
+      }
+      return {
+        authenticated: true,
+        caretakerId: 'default-caretaker-id',
+        caretakerType: 'System Caretaker',
+        caretakerRole: 'ADMIN',
+        familyId: 'default-family-id',
+        familySlug: 'my-family',
+        isSysAdmin: true,
+        authType: 'CARETAKER',
+        isAccountAuth: false,
+      };
+    }
+
     // First try to get the JWT token from the Authorization header
     const authHeader = req.headers.get('Authorization');
     let token: string | undefined;

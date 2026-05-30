@@ -69,7 +69,8 @@ async function main() {
         defaultWeightUnit: "LB",
         defaultTempUnit: "F",
         enableDebugTimer: false,
-        enableDebugTimezone: false
+        enableDebugTimezone: false,
+        timeFormat: (process.env.TIME_FORMAT || process.env.DEFAULT_TIME_FORMAT || '12h') === '24h' ? '24h' : '12h',
       }
     });
   } else {

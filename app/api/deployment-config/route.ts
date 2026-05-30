@@ -18,6 +18,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse<an
       allowAccountRegistration: process.env.ALLOW_ACCOUNT_REGISTRATION === 'true',
       betaEnabled: process.env.BETA === '1',
       notificationsEnabled: await isNotificationsEnabled(),
+      disableAuth: process.env.DISABLE_AUTH === 'true',
     };
 
     return NextResponse.json<ApiResponse<typeof config>>({

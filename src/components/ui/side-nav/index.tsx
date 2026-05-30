@@ -163,7 +163,7 @@ export const SideNav: React.FC<SideNavProps> = ({
   familyName,
 }) => {
   const { theme } = useTheme();
-  const { isSaasMode } = useDeployment();
+  const { isSaasMode, disableAuth } = useDeployment();
   const { t } = useLocalization();
   const { dateFormat } = useTimezone();
   const [isSystemDarkMode, setIsSystemDarkMode] = useState<boolean>(false);
@@ -607,11 +607,13 @@ export const SideNav: React.FC<SideNavProps> = ({
           />
           
           {/* Logout Button */}
-          <FooterButton
-            icon={<LogOut />}
-            label={t('Logout')}
-            onClick={onLogout}
-          />
+          {!disableAuth && (
+            <FooterButton
+              icon={<LogOut />}
+              label={t('Logout')}
+              onClick={onLogout}
+            />
+          )}
         </div>
       </div>
     </>

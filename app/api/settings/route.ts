@@ -39,7 +39,7 @@ async function handleGet(req: NextRequest, authContext: AuthResult) {
           enableBreastMilkTracking: true,
           includeSolidsInFeedTimer: true,
           dateFormat: 'MM/DD/YYYY',
-          timeFormat: '12h',
+          timeFormat: (process.env.TIME_FORMAT || process.env.DEFAULT_TIME_FORMAT || '12h') === '24h' ? '24h' : '12h',
           familyId: targetFamilyId,
         },
       });
