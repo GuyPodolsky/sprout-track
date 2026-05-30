@@ -45,6 +45,12 @@ async function handleGet(req: NextRequest, authContext: AuthResult) {
       });
     }
 
+    const envTimeFormat = process.env.TIME_FORMAT || process.env.DEFAULT_TIME_FORMAT;
+    if (settings && envTimeFormat) {
+      const normalizedFormat = envTimeFormat.toLowerCase() === '24h' ? '24h' : '12h';
+      settings.timeFormat = normalizedFormat;
+    }
+
     return NextResponse.json<ApiResponse<Settings>>({
       success: true,
       data: settings,
@@ -136,6 +142,12 @@ async function handlePut(req: NextRequest, authContext: AuthResult) {
       where: { id: existingSettings.id },
       data,
     });
+
+    const envTimeFormat = process.env.TIME_FORMAT || process.env.DEFAULT_TIME_FORMAT;
+    if (settings && envTimeFormat) {
+      const normalizedFormat = envTimeFormat.toLowerCase() === '24h' ? '24h' : '12h';
+      settings.timeFormat = normalizedFormat;
+    }
 
     // If securityPin was updated, also update system caretaker's pin
     if (body.securityPin !== undefined) {
